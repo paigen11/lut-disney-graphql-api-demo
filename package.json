@@ -1,0 +1,22 @@
+{
+  "name": "kungfu-api",
+  "version": "1.0.0",
+  "description": "Level Up Tuts graphql api example repo",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon && node index.js"
+  },
+  "keywords": [
+    "graphql",
+    "api",
+    "apollo"
+  ],
+  "author": "Paige Niedringhaus",
+  "license": "ISC",
+  "dependencies": {
+    "apollo-server": "^2.17.0",
+    "graphql": "^15.3.0",
+    "nodemon": "^2.0.4"
+  }
+}
