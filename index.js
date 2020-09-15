@@ -75,7 +75,12 @@ const resolvers = {
 };
 
 // create the apollo server = it needs typedefs and resolvers props
-const server = new ApolloServer({ typeDefs, resolvers });
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  introspection: true,
+  playground: true,
+});
 
 // listen method launches a web server
 server
