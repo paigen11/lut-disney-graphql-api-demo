@@ -1,7 +1,11 @@
 const { ApolloServer, gql } = require('apollo-server');
+const { GraphQLScalarType } = require('graphql');
+const { Kind } = require('graphql/language');
 
 // define the type definitions in a schema
 const typeDefs = gql`
+  scalar Date
+
   # enums / constants - they can only be one of these
   enum Status {
     WATCHED
@@ -19,7 +23,7 @@ const typeDefs = gql`
   type Movie {
     id: ID! # special field to know when to update the cache (it's serialized as a string but it's special)
     title: String
-    releaseDate: String
+    releaseDate: Date
     rating: Int
     actor: [Actor] # Valid = null, [], [...some data], X not valid [...some data without name or ID]
     # actor: [Actor]! # Valid = [], [...some data]
@@ -41,7 +45,7 @@ const movies = [
   {
     id: 'naeeurehnin',
     title: 'Aladdin',
-    releaseDate: '11-25-1992',
+    releaseDate: new Date('11-25-1992'),
     rating: 4,
     actor: [
       {
@@ -53,7 +57,7 @@ const movies = [
   {
     id: 'vnyhiorvn',
     title: 'The Little Mermaid',
-    releaseDate: '11-17-1989',
+    releaseDate: new Date('11-17-1989'),
     rating: 3,
   },
 ];
@@ -72,6 +76,24 @@ const resolvers = {
       return foundMovie;
     },
   },
+  Date: new GraphQLScalarType({
+    name: 'Date',
+    description: "it's a date, for realz",
+    parseValue(value) {
+      // valuue from the client
+      return new Date(value);
+    },
+    serialize(value) {
+      // value sent to the client
+      return value.getTime();
+    },
+    parseLiteral(ast) {
+      if (ast.kind === Kind.INT) {
+        return new Date(ast.value);
+      }
+      return null;
+    },
+  }),
 };
 
 // create the apollo server = it needs typedefs and resolvers props
