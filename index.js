@@ -40,6 +40,17 @@ const typeDefs = gql`
   }
 `;
 
+const actors = [
+  {
+    id: 'robin',
+    name: 'Robin Williams',
+  },
+  {
+    id: 'somebody',
+    name: 'Hello world',
+  },
+];
+
 // dummy data
 const movies = [
   {
@@ -49,8 +60,7 @@ const movies = [
     rating: 4,
     actor: [
       {
-        id: 'buiyvarrk',
-        name: 'Robin Williams',
+        id: 'robin',
       },
     ],
   },
@@ -59,6 +69,11 @@ const movies = [
     title: 'The Little Mermaid',
     releaseDate: new Date('11-17-1989'),
     rating: 3,
+    actor: [
+      {
+        id: 'somebody',
+      },
+    ],
   },
 ];
 
@@ -69,13 +84,25 @@ const resolvers = {
       return movies;
     },
     movie: (obj, { id }, context, info) => {
-      console.log(`id ${id}`);
       const foundMovie = movies.find((movie) => {
         return movie.id === id;
       });
       return foundMovie;
     },
   },
+
+  // technique to get info from another relational object associated with your current object
+  Movie: {
+    actor: (obj, arg, context) => {
+      // DB call to filter actors out
+      const actorIds = obj.actor.map((actor) => actor.id);
+      const filteredActors = actors.filter((actor) => {
+        return actorIds.includes(actor.id);
+      });
+      return filteredActors;
+    },
+  },
+
   Date: new GraphQLScalarType({
     name: 'Date',
     description: "it's a date, for realz",
@@ -84,7 +111,7 @@ const resolvers = {
       return new Date(value);
     },
     serialize(value) {
-      // value sent to the client
+      // value sent to the client (serialized in ms)
       return value.getTime();
     },
     parseLiteral(ast) {
