@@ -2,7 +2,7 @@ const { ApolloServer, gql } = require('apollo-server');
 const { GraphQLScalarType } = require('graphql');
 const { Kind } = require('graphql/language');
 
-// define the type definitions in a schema
+// define the type definitions in a schema - gql`` parses your string into an AST
 const typeDefs = gql`
   scalar Date
 
@@ -37,6 +37,25 @@ const typeDefs = gql`
     movies: [Movie]
     # define any params or arguments and their type ID
     movie(id: ID): Movie
+  }
+
+  input ActorInput {
+    id: ID
+  }
+
+  # simplifies mutation args passed in
+  input MovieInput {
+    id: ID
+    title: String
+    releaseDate: Date
+    rating: Int
+    status: Status
+    actor: [ActorInput] # you cannot have objects as sub fields inside an input, it must be another input type
+  }
+
+  # mutation to update data in graphql
+  type Mutation {
+    addMovie(movie: MovieInput): [Movie] # this is what gets returned from mutation
   }
 `;
 
@@ -103,6 +122,24 @@ const resolvers = {
     },
   },
 
+  Mutation: {
+    addMovie: (obj, { movie }, { userId }) => {
+      if (userId) {
+        console.log(userId);
+        // do mutation and database stuff
+        const newMoviesList = [
+          ...movies,
+          // new movie data goes here
+          movie,
+        ];
+        // return data as expected in schema
+        return newMoviesList;
+      } else {
+        return movies;
+      }
+    },
+  },
+
   Date: new GraphQLScalarType({
     name: 'Date',
     description: "it's a date, for realz",
@@ -129,6 +166,13 @@ const server = new ApolloServer({
   resolvers,
   introspection: true,
   playground: true,
+  context: ({ req }) => {
+    // objecct shared across all resolvers that are executing for a particular operation (use this to share per-operation state like auth info)
+    const fakeUser = {
+      userId: 'helloImaUser',
+    };
+    return { ...fakeUser };
+  },
 });
 
 // listen method launches a web server
