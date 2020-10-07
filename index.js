@@ -4,9 +4,15 @@ const { Kind } = require('graphql/language');
 
 // define the type definitions in a schema - gql`` parses your string into an AST
 const typeDefs = gql`
+  # this cannot be defined in your schema, it must exist somewhere else
+  # fragment Meta on Movie {
+  #   releaseDate
+  #   rating
+  # }
+
   scalar Date
 
-  # enums / constants - they can only be one of these
+  # enums / constants - they can only be one of these values
   enum Status {
     WATCHED
     INTERESTED
