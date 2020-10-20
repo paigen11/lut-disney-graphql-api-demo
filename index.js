@@ -10,6 +10,18 @@ mongoose.connect(
 );
 const db = mongoose.connection;
 
+// declare a new mongoose schema using the docs to get started https://mongoosejs.com/docs/guide.html
+const movieSchema = new mongoose.Schema({
+  title: String,
+  releaseDate: Date,
+  rating: Number,
+  status: String,
+  actorIds: [String],
+});
+
+// attach movie schema to object here
+const Movie = mongoose.model('Movie', movieSchema);
+
 // define the type definitions in a schema - gql`` parses your string into an AST
 const typeDefs = gql`
   # this cannot be defined in your schema, it must exist somewhere else
@@ -113,14 +125,23 @@ const movies = [
 const resolvers = {
   // if it exists in your schema, it needs to exist here
   Query: {
-    movies: () => {
-      return movies;
+    movies: async () => {
+      try {
+        const allMovies = await Movie.find();
+        return allMovies;
+      } catch (err) {
+        console.error(err);
+        return [];
+      }
     },
-    movie: (obj, { id }, context, info) => {
-      const foundMovie = movies.find((movie) => {
-        return movie.id === id;
-      });
-      return foundMovie;
+    movie: async (obj, { id }) => {
+      try {
+        const foundMovie = await Movie.findById(id);
+        return foundMovie;
+      } catch (err) {
+        console.error(err);
+        return {};
+      }
     },
   },
 
@@ -137,19 +158,29 @@ const resolvers = {
   },
 
   Mutation: {
-    addMovie: (obj, { movie }, { userId }) => {
-      if (userId) {
-        console.log(userId);
-        // do mutation and database stuff
-        const newMoviesList = [
-          ...movies,
-          // new movie data goes here
-          movie,
-        ];
-        // return data as expected in schema
-        return newMoviesList;
-      } else {
-        return movies;
+    addMovie: async (obj, { movie }, { userId }) => {
+      try {
+        if (userId) {
+          // console.log(userId);
+          // do mutation and database stuff
+          // const newMoviesList = [
+          //   ...movies,
+          //   // new movie data goes here
+          //   movie,
+          // ];
+          // mongo create
+          await Movie.create({
+            ...movie,
+          });
+          const allMovies = await Movie.find();
+          // return data as expected in schema
+          return allMovies;
+        } else {
+          return movies;
+        }
+      } catch (err) {
+        console.error(err);
+        return [];
       }
     },
   },
