@@ -1,11 +1,11 @@
-const { ApolloServer, gql } = require('apollo-server');
+const { ApolloServer, gql, PubSub } = require('apollo-server');
 const { GraphQLScalarType } = require('graphql');
 const { Kind } = require('graphql/language');
 require('dotenv').config();
 const mongoose = require('mongoose');
 
 mongoose.connect(
-  `mongodb+srv://${process.env.USERNAME}:${process.env.PASSWORD}@cluster0.abhkw.mongodb.net/database?retryWrites=true&w=majority`,
+  `mongodb+srv://kungfu:${process.env.PASSWORD}@cluster0.abhkw.mongodb.net/database?retryWrites=true&w=majority`,
   { useNewUrlParser: true },
 );
 const db = mongoose.connection;
@@ -83,6 +83,10 @@ const typeDefs = gql`
   type Mutation {
     addMovie(movie: MovieInput): [Movie] # this is what gets returned from mutation
   }
+
+  type Subscription {
+    movieAdded: Movie
+  }
 `;
 
 const actors = [
@@ -122,7 +126,20 @@ const movies = [
   },
 ];
 
+// create new pubsub object
+const pubsub = new PubSub();
+const MOVIE_ADDED = 'MOVIE_ADDED';
+
 const resolvers = {
+  Subscription: {
+    movieAdded: {
+      subscribe: () => {
+        // return something here
+        return pubsub.asyncIterator([MOVIE_ADDED]);
+      },
+    },
+  },
+
   // if it exists in your schema, it needs to exist here
   Query: {
     movies: async () => {
@@ -169,9 +186,11 @@ const resolvers = {
           //   movie,
           // ];
           // mongo create
-          await Movie.create({
+          const newMovie = await Movie.create({
             ...movie,
           });
+          // fire off the pubsub to let the publisher know a new movie's been added
+          pubsub.publish(MOVIE_ADDED, { movieAdded: newMovie });
           const allMovies = await Movie.find();
           // return data as expected in schema
           return allMovies;
